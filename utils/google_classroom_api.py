@@ -14,4 +14,16 @@ def authenticate_google_classroom():
 
     # Initialize Google Classroom API service
     service = build("classroom", "v1", credentials=credentials)
+    
+    # Test connection by printing the list of courses
+    try:
+        courses = service.courses().list().execute().get("courses", [])
+        if not courses:
+            print("No classrooms found.")
+        else:
+            print(f"Found {len(courses)} classrooms.")
+    except Exception as e:
+        print("Error accessing Google Classroom:", e)
+    
     return service
+
