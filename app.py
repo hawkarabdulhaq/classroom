@@ -7,11 +7,29 @@ from utils.google_classroom_api import authenticate_google_classroom
 st.set_page_config(page_title="Classroom Content Management", layout="wide")
 st.title("Classroom Content Management")
 
-# Sidebar Navigation
+# Sidebar with clickable icons
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ("Contents", "Classroom Overview"))
 
-# Load and display CSV data on the "Contents" page
+# Define icons and labels
+content_icon = "📚"
+classroom_icon = "🏫"
+
+# Display clickable icons as buttons
+col1, col2 = st.sidebar.columns(2)
+with col1:
+    contents_button = st.button(content_icon + " Contents")
+with col2:
+    classroom_button = st.button(classroom_icon + " Classroom Overview")
+
+# Page routing based on button click
+if contents_button:
+    page = "Contents"
+elif classroom_button:
+    page = "Classroom Overview"
+else:
+    page = "Contents"  # Default to Contents page
+
+# Display selected page content
 if page == "Contents":
     st.header("Content Management")
     data = load_csv_data("content_data.csv")  # Load CSV data
@@ -19,7 +37,6 @@ if page == "Contents":
         st.write(data)  # Display data in table form
         # Additional posting options and Google Classroom integration can go here
 
-# Display Classroom Overview on the "Classroom Overview" page
 elif page == "Classroom Overview":
     st.header("Classroom Overview")
     authenticate_google_classroom()  # Authenticate with Google Classroom
