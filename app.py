@@ -1,7 +1,8 @@
 # app.py
 import streamlit as st
-from pages.contents import content_management
-from pages.classrooms import classroom_overview
+from app_pages.contents import content_management
+from app_pages.classrooms import classroom_overview
+
 
 # App title and configuration
 st.set_page_config(page_title="Classroom Content Management", layout="wide")
