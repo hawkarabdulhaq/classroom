@@ -20,14 +20,16 @@ classroom_button = st.sidebar.button(classroom_icon + " Classroom Overview")
 
 # Page routing based on button click
 if contents_button:
-    page = "Contents"
+    st.session_state.page = "Contents"
 elif classroom_button:
-    page = "Classroom Overview"
+    st.session_state.page = "Classroom Overview"
 else:
-    page = "Contents"  # Default to Contents page
+    # Use session_state to remember the selected page
+    if 'page' not in st.session_state:
+        st.session_state.page = "Contents"
 
 # Display selected page content
-if page == "Contents":
+if st.session_state.page == "Contents":
     content_management()  # Loads content management from contents.py
-elif page == "Classroom Overview":
+elif st.session_state.page == "Classroom Overview":
     classroom_overview()  # Loads classroom overview from classrooms.py
