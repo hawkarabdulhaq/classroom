@@ -14,12 +14,9 @@ st.sidebar.title("Navigation")
 content_icon = "📚"
 classroom_icon = "🏫"
 
-# Display clickable icons as buttons
-col1, col2 = st.sidebar.columns(2)
-with col1:
-    contents_button = st.button(content_icon + " Contents")
-with col2:
-    classroom_button = st.button(classroom_icon + " Classroom Overview")
+# Display clickable icons in a vertical layout as buttons
+contents_button = st.sidebar.button(content_icon + " Contents")
+classroom_button = st.sidebar.button(classroom_icon + " Classroom Overview")
 
 # Page routing based on button click
 if contents_button:
