@@ -1,43 +1,105 @@
-# app.py
 import os
-import streamlit as st
-from app_pages.contents import content_management
-from app_pages.classrooms import classroom_overview
+import pandas as pd
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
-# App title and configuration
-st.set_page_config(page_title="Classroom Content Management", layout="wide")
-st.title("Classroom Content Management")
+# Load CSV Data
+def load_csv_data(filepath):
+    try:
+        data = pd.read_csv(filepath)
+        print("CSV data loaded successfully.")
+        return data
+    except FileNotFoundError:
+        print("CSV file not found.")
+        return None
 
-# Sidebar with clickable icons
-st.sidebar.title("Navigation")
+# Content Management Function
+def content_management():
+    print("Loading content management...")
+    data = load_csv_data("content_data.csv")
+    if data is not None:
+        print(data)
 
-# Define icons and labels
-content_icon = "📚"
-classroom_icon = "🏫"
+# Authenticate Google Classroom
+def authenticate_google_classroom():
+    credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "service_account.json")
+    print(f"Loading credentials from: {credentials_path}")
 
-# Display clickable icons as buttons in a vertical layout
-contents_button = st.sidebar.button(content_icon + " Contents")
-classroom_button = st.sidebar.button(classroom_icon + " Classroom Overview")
+    try:
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path,
+            scopes=[
+                "https://www.googleapis.com/auth/classroom.courses",
+                "https://www.googleapis.com/auth/classroom.coursework.students",
+                "https://www.googleapis.com/auth/classroom.rosters"
+            ]
+        )
+        print("Credentials successfully loaded.")
+    except Exception as e:
+        print(f"Error loading credentials: {e}")
+        return None
 
-# Page routing based on button click
-if contents_button:
-    st.session_state.page = "Contents"
-elif classroom_button:
-    st.session_state.page = "Classroom Overview"
-else:
-    # Use session_state to remember the selected page
-    if 'page' not in st.session_state:
-        st.session_state.page = "Contents"
+    try:
+        service = build("classroom", "v1", credentials=credentials)
+        print("Google Classroom service initialized successfully.")
+        return service
+    except Exception as e:
+        print(f"Error initializing Google Classroom service: {e}")
+        return None
 
-# Display selected page content
-if st.session_state.page == "Contents":
-    content_management()  # Loads content management from contents.py
-elif st.session_state.page == "Classroom Overview":
-    classroom_overview()  # Loads classroom overview from classrooms.py
+# Classroom Overview Function
+def classroom_overview():
+    print("Retrieving Google Classroom data...")
 
-# Check if running in a non-interactive environment like GitHub Actions
-if os.getenv("CI") == "true":
-    print("Running in a non-interactive environment.")
-    # Run classroom_overview directly to retrieve classroom data
-    classroom_overview()
-    print("Finished retrieving classroom data.")
+    service = authenticate_google_classroom()
+    if service is None:
+        print("Failed to authenticate with Google Classroom.")
+        return
+
+    try:
+        classrooms = service.courses().list().execute().get("courses", [])
+        if not classrooms:
+            print("No classrooms found.")
+            return
+
+        for classroom in classrooms:
+            print(f"Classroom: {classroom['name']}")
+
+            try:
+                coursework = service.courses().courseWork().list(courseId=classroom["id"]).execute().get("courseWork", [])
+                if not coursework:
+                    print("No content available for this classroom.")
+                    continue
+
+                for item in coursework:
+                    print(f"Week {item.get('week', 'N/A')} - {item['title']}")
+                    print(f"Type: {item.get('workType', 'N/A')}")
+                    print(f"Description: {item.get('description', 'No description provided')}")
+                    print(f"Link: {item.get('alternateLink', 'No link provided')}")
+                    print("---")
+
+            except Exception as e:
+                print(f"Error retrieving coursework for {classroom['name']}: {e}")
+
+    except Exception as e:
+        print(f"Error retrieving classrooms: {e}")
+
+# Main Function to Run App Logic
+def main():
+    print("Starting app.py to retrieve Google Classroom data...")
+
+    # Check if running in a CI environment (like GitHub Actions)
+    if os.getenv("CI") == "true":
+        print("Running in a non-interactive environment.")
+        classroom_overview()
+        print("Finished retrieving classroom data.")
+    else:
+        # Interactive mode - displays contents and classroom overview
+        print("Loading Content Management and Classroom Overview")
+        content_management()
+        classroom_overview()
+
+    print("Finished running app.py.")
+
+if __name__ == "__main__":
+    main()
