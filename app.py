@@ -1,8 +1,8 @@
 # app.py
+import os
 import streamlit as st
 from app_pages.contents import content_management
 from app_pages.classrooms import classroom_overview
-
 
 # App title and configuration
 st.set_page_config(page_title="Classroom Content Management", layout="wide")
@@ -34,3 +34,10 @@ if st.session_state.page == "Contents":
     content_management()  # Loads content management from contents.py
 elif st.session_state.page == "Classroom Overview":
     classroom_overview()  # Loads classroom overview from classrooms.py
+
+# Check if running in a non-interactive environment like GitHub Actions
+if os.getenv("CI") == "true":
+    print("Running in a non-interactive environment.")
+    # Run classroom_overview directly to retrieve classroom data
+    classroom_overview()
+    print("Finished retrieving classroom data.")
