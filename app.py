@@ -1,89 +1,39 @@
-import os
+import streamlit as st
 import pandas as pd
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-# Utility function for console output
-def output(message):
-    print(message)
+# Google Sheets API setup
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets", 
+         "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 
-# Load and display CSV data
-def load_csv_data(filepath):
-    try:
-        data = pd.read_csv(filepath)
-        output("CSV data loaded successfully.")
-        output(data.to_string())  # Display the full DataFrame
-        return data
-    except FileNotFoundError:
-        output("ERROR: CSV file not found.")
-        return None
+# Replace with the path to your service account key JSON file
+credentials = ServiceAccountCredentials.from_json_keyfile_name('your-service-account.json', scope)
+client = gspread.authorize(credentials)
 
-# Authenticate with Google Classroom API
-def authenticate_google_classroom():
-    credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "service_account.json")
-    if not os.path.exists(credentials_path):
-        output(f"ERROR: {credentials_path} file not found!")
-        return None
+# Load data from Google Sheets
+sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1IWn53fkhx_rznRJOGLqx-HlxOz7dffq6WiO_BRYe1aM/edit#gid=171068923")
+worksheet = sheet.worksheet("content")
+data = worksheet.get_all_records()
+df = pd.DataFrame(data)
 
-    try:
-        credentials = service_account.Credentials.from_service_account_file(
-            credentials_path,
-            scopes=[
-                "https://www.googleapis.com/auth/classroom.courses",
-                "https://www.googleapis.com/auth/classroom.coursework.students",
-                "https://www.googleapis.com/auth/classroom.rosters"
-            ]
-        )
-        output("Google Classroom credentials loaded successfully.")
-        return build("classroom", "v1", credentials=credentials)
-    except Exception as e:
-        output(f"ERROR: Failed to initialize Google Classroom API - {e}")
-        return None
+# Streamlit app layout
+st.title("E-Learning Content Dashboard")
 
-# Retrieve and display Google Classroom data
-def classroom_overview():
-    service = authenticate_google_classroom()
-    if service is None:
-        output("ERROR: Google Classroom authentication failed.")
-        return
+# Sidebar navigation
+st.sidebar.header("Navigation")
+selected_week = st.sidebar.selectbox("Select Week", sorted(df['Week'].unique()))
+selected_type = st.sidebar.selectbox("Select Content Type", sorted(df['Type'].unique()))
 
-    try:
-        classrooms = service.courses().list().execute().get("courses", [])
-        if not classrooms:
-            output("No classrooms found.")
-            return
+# Filter data by week and content type
+filtered_data = df[(df['Week'] == selected_week) & (df['Type'] == selected_type)]
 
-        for classroom in classrooms:
-            output(f"Classroom: {classroom['name']}")
-            try:
-                coursework = service.courses().courseWork().list(courseId=classroom["id"]).execute().get("courseWork", [])
-                if not coursework:
-                    output("No content available for this classroom.")
-                    continue
+# Display content
+st.subheader(f"Week {selected_week} - {selected_type} Content")
 
-                for item in coursework:
-                    output(f"Week {item.get('week', 'N/A')} - {item['title']}")
-                    output(f"Type: {item.get('workType', 'N/A')}")
-                    output(f"Description: {item.get('description', 'No description provided')}")
-                    output(f"Link: {item.get('alternateLink', 'No link provided')}")
-                    output("---")
-            except Exception as e:
-                output(f"ERROR: Failed to retrieve coursework for {classroom['name']} - {e}")
-
-    except Exception as e:
-        output(f"ERROR: Failed to retrieve classrooms - {e}")
-
-# Main Function to Run App Logic
-def main():
-    output("Starting Google Classroom data retrieval and CSV loading...")
-    
-    # Display CSV content
-    load_csv_data("content_data.csv")
-    
-    # Display Google Classroom content
-    classroom_overview()
-
-    output("Finished running app.py.")
-
-if __name__ == "__main__":
-    main()
+for _, row in filtered_data.iterrows():
+    st.write(f"### {row['Title']}")
+    st.write(row['Content'])
+    if row['Link']:
+        st.write(f"[View Resource]({row['Link']})")
+    st.write("---")
