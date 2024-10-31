@@ -23,24 +23,30 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    # Check if the GCP_SERVICE_ACCOUNT secret is available
-    - name: Check GCP_SERVICE_ACCOUNT availability
+    # Debug step to ensure GCP_SERVICE_ACCOUNT is available
+    - name: Debug GCP_SERVICE_ACCOUNT variable
+      env:
+        GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       run: |
         if [ -z "$GCP_SERVICE_ACCOUNT" ]; then
-          echo "GCP_SERVICE_ACCOUNT is not set!"
+          echo "ERROR: GCP_SERVICE_ACCOUNT is not set!"
           exit 1
         else
-          echo "GCP_SERVICE_ACCOUNT is set."
+          echo "SUCCESS: GCP_SERVICE_ACCOUNT is set."
         fi
 
+    # Create service account JSON file if GCP_SERVICE_ACCOUNT is set
     - name: Prepare Service Account JSON file
       env:
         GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       run: |
-        # Convert the JSON string to a file
-        echo "$GCP_SERVICE_ACCOUNT" > service_account.json
-        # Display the file to ensure it's been created (omit sensitive information)
-        echo "Service account JSON file created."
+        if [ -n "$GCP_SERVICE_ACCOUNT" ]; then
+          echo "$GCP_SERVICE_ACCOUNT" > service_account.json
+          echo "Service account JSON file created."
+        else
+          echo "GCP_SERVICE_ACCOUNT is not set. Exiting."
+          exit 1
+        fi
 
     # Run Streamlit App
     - name: Run Streamlit App
