@@ -7,10 +7,19 @@ def classroom_overview():
 
     # Authenticate and initialize Google Classroom API
     service = authenticate_google_classroom()
+    if service is None:
+        st.write("Failed to authenticate with Google Classroom.")
+        return
     
     # Retrieve list of all classrooms
-    classrooms = service.courses().list().execute().get("courses", [])
-    
+    try:
+        classrooms = service.courses().list().execute().get("courses", [])
+        print(f"Retrieved classrooms: {classrooms}")  # Debugging output
+    except Exception as e:
+        print(f"Error retrieving classrooms: {e}")
+        st.error("Failed to retrieve classrooms from Google Classroom.")
+        return
+
     if not classrooms:
         st.write("No classrooms found.")
         return
@@ -18,9 +27,16 @@ def classroom_overview():
     # Display each classroom and its contents
     for classroom in classrooms:
         st.subheader(classroom["name"])  # Display classroom name
-        
+        print(f"Classroom found: {classroom['name']}")  # Debugging output
+
         # Fetch coursework (assignments and questions) for this classroom
-        coursework = service.courses().courseWork().list(courseId=classroom["id"]).execute().get("courseWork", [])
+        try:
+            coursework = service.courses().courseWork().list(courseId=classroom["id"]).execute().get("courseWork", [])
+            print(f"Retrieved coursework for {classroom['name']}: {coursework}")  # Debugging output
+        except Exception as e:
+            print(f"Error retrieving coursework for {classroom['name']}: {e}")
+            st.write(f"Failed to retrieve coursework for {classroom['name']}.")
+            continue
         
         if not coursework:
             st.write("No content available for this classroom.")
