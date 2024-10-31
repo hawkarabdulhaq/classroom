@@ -1,4 +1,4 @@
-# .github/workflows/deploy.yml
+# .github/workflows/run_app.yml
 name: Run Classroom Data Retrieval
 
 on:
@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  run_classroom_retrieval:
+  run_script:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,39 +23,6 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    # Check if GCP_SERVICE_ACCOUNT is available and display a debug message
-    - name: Check GCP_SERVICE_ACCOUNT availability
-      env:
-        GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      run: |
-        if [ -z "$GCP_SERVICE_ACCOUNT" ]; then
-          echo "ERROR: GCP_SERVICE_ACCOUNT is not set!"
-          exit 1
-        else
-          echo "SUCCESS: GCP_SERVICE_ACCOUNT is set."
-          echo "$GCP_SERVICE_ACCOUNT" | head -c 100  # Print only the first 100 characters
-        fi
-
-    # Create service account JSON file from GCP_SERVICE_ACCOUNT
-    - name: Prepare Service Account JSON file
-      env:
-        GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      run: |
-        echo "$GCP_SERVICE_ACCOUNT" > service_account.json
-        echo "Service account JSON file created."
-
-    # Check the contents and existence of the service_account.json file
-    - name: Verify service_account.json File Creation
-      run: |
-        if [ -f "service_account.json" ]; then
-          echo "service_account.json file exists."
-          head -c 100 service_account.json  # Print first 100 characters for verification
-        else
-          echo "ERROR: service_account.json file is missing!"
-          exit 1
-        fi
-
-    # Run app.py directly
     - name: Run app.py to Retrieve Classroom Data
       env:
         GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
