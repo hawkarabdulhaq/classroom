@@ -8,8 +8,13 @@ import streamlit as st
 def authenticate_google_classroom():
     # Load credentials from the GCP_SERVICE_ACCOUNT environment variable
     service_account_info = os.getenv("GCP_SERVICE_ACCOUNT")
+
+    # Debugging: Print if service_account_info is None
     if service_account_info is None:
         raise ValueError("GCP_SERVICE_ACCOUNT environment variable is not set.")
+    
+    # Debugging: Print the first 100 characters of the environment variable to confirm it’s set
+    print("GCP_SERVICE_ACCOUNT is set:", service_account_info[:100])
 
     try:
         credentials = service_account.Credentials.from_service_account_info(
@@ -21,7 +26,7 @@ def authenticate_google_classroom():
             ]
         )
     except json.JSONDecodeError as e:
-        raise ValueError("Failed to decode JSON from GCP_SERVICE_ACCOUNT. Please ensure the JSON is correctly formatted.") from e
+        raise ValueError("Failed to decode JSON from GCP_SERVICE_ACCOUNT. Ensure JSON format is correct.") from e
 
     # Initialize Google Classroom API service
     service = build("classroom", "v1", credentials=credentials)
