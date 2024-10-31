@@ -1,54 +1,6 @@
-# .github/workflows/deploy.yml
-name: Deploy Streamlit App
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-
-    # Check if GCP_SERVICE_ACCOUNT is available and display a debug message
-    - name: Check GCP_SERVICE_ACCOUNT availability
-      env:
-        GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      run: |
-        if [ -z "$GCP_SERVICE_ACCOUNT" ]; then
-          echo "ERROR: GCP_SERVICE_ACCOUNT is not set!"
-          exit 1
-        else
-          echo "SUCCESS: GCP_SERVICE_ACCOUNT is set."
-          echo "$GCP_SERVICE_ACCOUNT" | head -c 100  # Print only the first 100 characters
-        fi
-
-    # Create service account JSON file from GCP_SERVICE_ACCOUNT
-    - name: Prepare Service Account JSON file
-      env:
-        GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      run: |
-        echo "Converting GCP_SERVICE_ACCOUNT to service_account.json file."
-        echo "$GCP_SERVICE_ACCOUNT" > service_account.json
-        echo "Service account JSON file created."
-
-    # Run Streamlit in headless mode to verify the app loads without waiting indefinitely
-    - name: Run Streamlit App (Headless Mode)
-      env:
-        GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-        GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
-      run: |
-        streamlit run app.py --server.headless true
+- name: Run Streamlit App
+  env:
+    GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+    GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
+  run: |
+    streamlit run app.py
