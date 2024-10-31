@@ -3,37 +3,27 @@ import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# Utility function to ensure all output goes to the console
+# Utility function for console output
 def output(message):
     print(message)
 
-# Load CSV Data
+# Load and display CSV data
 def load_csv_data(filepath):
     try:
         data = pd.read_csv(filepath)
         output("CSV data loaded successfully.")
-        output(data.to_string())  # Print the entire DataFrame to ensure visibility
+        output(data.to_string())  # Display the full DataFrame
         return data
     except FileNotFoundError:
-        output("CSV file not found.")
+        output("ERROR: CSV file not found.")
         return None
 
-# Content Management Function
-def content_management():
-    output("Loading content management...")
-    data = load_csv_data("content_data.csv")
-    if data is not None:
-        output("Content data:")
-        output(data.to_string())
-
-# Authenticate Google Classroom
+# Authenticate with Google Classroom API
 def authenticate_google_classroom():
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "service_account.json")
     if not os.path.exists(credentials_path):
         output(f"ERROR: {credentials_path} file not found!")
         return None
-
-    output(f"Loading credentials from: {credentials_path}")
 
     try:
         credentials = service_account.Credentials.from_service_account_file(
@@ -44,26 +34,17 @@ def authenticate_google_classroom():
                 "https://www.googleapis.com/auth/classroom.rosters"
             ]
         )
-        output("Credentials successfully loaded.")
+        output("Google Classroom credentials loaded successfully.")
+        return build("classroom", "v1", credentials=credentials)
     except Exception as e:
-        output(f"Error loading credentials: {e}")
+        output(f"ERROR: Failed to initialize Google Classroom API - {e}")
         return None
 
-    try:
-        service = build("classroom", "v1", credentials=credentials)
-        output("Google Classroom service initialized successfully.")
-        return service
-    except Exception as e:
-        output(f"Error initializing Google Classroom service: {e}")
-        return None
-
-# Classroom Overview Function
+# Retrieve and display Google Classroom data
 def classroom_overview():
-    output("Retrieving Google Classroom data...")
-
     service = authenticate_google_classroom()
     if service is None:
-        output("Failed to authenticate with Google Classroom.")
+        output("ERROR: Google Classroom authentication failed.")
         return
 
     try:
@@ -74,7 +55,6 @@ def classroom_overview():
 
         for classroom in classrooms:
             output(f"Classroom: {classroom['name']}")
-
             try:
                 coursework = service.courses().courseWork().list(courseId=classroom["id"]).execute().get("courseWork", [])
                 if not coursework:
@@ -87,23 +67,21 @@ def classroom_overview():
                     output(f"Description: {item.get('description', 'No description provided')}")
                     output(f"Link: {item.get('alternateLink', 'No link provided')}")
                     output("---")
-
             except Exception as e:
-                output(f"Error retrieving coursework for {classroom['name']}: {e}")
+                output(f"ERROR: Failed to retrieve coursework for {classroom['name']} - {e}")
 
     except Exception as e:
-        output(f"Error retrieving classrooms: {e}")
+        output(f"ERROR: Failed to retrieve classrooms - {e}")
 
 # Main Function to Run App Logic
 def main():
-    output("Starting app.py to retrieve Google Classroom data...")
-
-    # Confirm the existence of service_account.json for CI environments
-    if not os.path.exists("service_account.json"):
-        output("ERROR: service_account.json is missing. Ensure the file is available.")
-    else:
-        content_management()
-        classroom_overview()
+    output("Starting Google Classroom data retrieval and CSV loading...")
+    
+    # Display CSV content
+    load_csv_data("content_data.csv")
+    
+    # Display Google Classroom content
+    classroom_overview()
 
     output("Finished running app.py.")
 
