@@ -3,18 +3,16 @@ import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# Utility function to print or write depending on the environment
+# Utility function to ensure all output goes to the console
 def output(message):
-    if 'streamlit' in globals():
-        st.write(message)
-    else:
-        print(message)
+    print(message)
 
 # Load CSV Data
 def load_csv_data(filepath):
     try:
         data = pd.read_csv(filepath)
         output("CSV data loaded successfully.")
+        output(data.to_string())  # Print the entire DataFrame to ensure visibility
         return data
     except FileNotFoundError:
         output("CSV file not found.")
@@ -25,7 +23,8 @@ def content_management():
     output("Loading content management...")
     data = load_csv_data("content_data.csv")
     if data is not None:
-        output(data)
+        output("Content data:")
+        output(data.to_string())
 
 # Authenticate Google Classroom
 def authenticate_google_classroom():
@@ -33,7 +32,7 @@ def authenticate_google_classroom():
     if not os.path.exists(credentials_path):
         output(f"ERROR: {credentials_path} file not found!")
         return None
-    
+
     output(f"Loading credentials from: {credentials_path}")
 
     try:
