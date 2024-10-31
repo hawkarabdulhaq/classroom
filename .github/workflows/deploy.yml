@@ -45,16 +45,10 @@ jobs:
         echo "$GCP_SERVICE_ACCOUNT" > service_account.json
         echo "Service account JSON file created."
 
-    # Check the contents of the service_account.json file to ensure it was created correctly
-    - name: Debug service_account.json contents
-      run: |
-        head -c 100 service_account.json  # Print the first 100 characters
-        echo "Checking if service_account.json was created and contains valid JSON."
-
-    # Run Streamlit App
-    - name: Run Streamlit App
+    # Run Streamlit in headless mode to verify the app loads without waiting indefinitely
+    - name: Run Streamlit App (Headless Mode)
       env:
         GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
       run: |
-        streamlit run app.py
+        streamlit run app.py --server.headless true
