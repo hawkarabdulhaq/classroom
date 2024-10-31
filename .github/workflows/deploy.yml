@@ -51,10 +51,10 @@ jobs:
         head -c 100 service_account.json  # Print the first 100 characters
         echo "Checking if service_account.json was created and contains valid JSON."
 
-  - name: Run Streamlit App
-    env:
-      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
-  run: |
-    streamlit run app.py
-
+    # Run Streamlit App
+    - name: Run Streamlit App
+      env:
+        GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
+      run: |
+        streamlit run app.py
