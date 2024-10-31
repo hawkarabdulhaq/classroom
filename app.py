@@ -30,6 +30,10 @@ def content_management():
 # Authenticate Google Classroom
 def authenticate_google_classroom():
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "service_account.json")
+    if not os.path.exists(credentials_path):
+        output(f"ERROR: {credentials_path} file not found!")
+        return None
+    
     output(f"Loading credentials from: {credentials_path}")
 
     try:
@@ -94,8 +98,14 @@ def classroom_overview():
 # Main Function to Run App Logic
 def main():
     output("Starting app.py to retrieve Google Classroom data...")
-    content_management()
-    classroom_overview()
+
+    # Confirm the existence of service_account.json for CI environments
+    if not os.path.exists("service_account.json"):
+        output("ERROR: service_account.json is missing. Ensure the file is available.")
+    else:
+        content_management()
+        classroom_overview()
+
     output("Finished running app.py.")
 
 if __name__ == "__main__":
